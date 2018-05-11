@@ -13,6 +13,20 @@ const colors = {
   pink: '#e07'
 };
 
+function keyValueIterable(target) {
+  target[Symbol.iterator] = function() {
+    const keys = Object.keys(target);
+    return({
+      next() {
+        const done = keys.length === 0;
+        const key = keys.shift();
+        return { value: [key, target[key]], done }
+      },
+    })
+  };
+  return target;
+}
+
 const itColors = keyValueIterable(colors);
 for (const [, color] of itColors) {
   console.log(color);
@@ -32,6 +46,23 @@ const random = {
   })
 };
 
+function take(sequence, amount) {
+  return {
+    [Symbol.iterator]() {
+      const iterator = sequence[Symbol.iterator]();
+      return {
+        next() {
+          // проверка на выход
+          if (amount-- < 1) {
+            return {value: undefined, done: true}
+          }
+          return iterator.next();
+        }
+      }
+    }
+  };
+}
+
 const a = [...take(random, 3)];
 console.log(a);
 
@@ -40,6 +71,34 @@ console.log(a);
 //     Реализовать метод return для остановки итератора с помощью for-of + break
 // EN: Create iterable iterator, which produces Fibonacci numbers
 //     Implement method return, which allows you to stop iterator using for-of + break
+const Fib = {
+  [Symbol.iterator]() {
+    let n1 = 1, n2 = 1;
+    return {
+      [Symbol.iterator]() {
+        return this;
+      },
+      next() {
+        let current = n2;
+        n2 = n1;
+        n1 = n1 + current;
+
+        return {
+          value: current,
+          done: false
+        };
+      },
+      return(v) {
+        console.log('Fib terminated');
+        return {
+          value: v,
+          done: true
+        }
+      }
+    }
+  }
+};
+
 
 for (let v of Fib) {
   console.log(v);
@@ -51,6 +110,19 @@ for (let v of Fib) {
 //     Например, [...-3] => [0, -1, -2, -3], [...3] => [0, 1, 2, 3]
 // EN: Create iterator for numbers, which allows you to get arrays of sequential integers.
 //     Example, [...-3] => [0, -1, -2, -3], [...3] => [0, 1, 2, 3]
+Number.prototype[Symbol.iterator] = function() {
+  const value = this.valueOf();
+  let counter = 0;
+  return {
+    next() {
+      if (value > 0) {
+        return counter > value ? {done: true} : {value: counter++, done: false};
+      }
+      return counter < value ? {done: true} : {value: counter--, done: false};
+    }
+  }
+};
+
 
 console.log([...-5]);
 console.log([...5]);
